@@ -50,14 +50,19 @@ public class OrderedSemanticPair {
         
         if(!other.getClass().equals(this.getClass())) {
             return false;
-        } else if (!this.a.equals(((OrderedSemanticPair)other).getA())) {
+        } else if (!this.a.signature.equals(((OrderedSemanticPair)other).getA().signature)) {
             return false;
-        } else if (!this.b.equals(((OrderedSemanticPair)other).getB())) {
+        } else if (!this.b.signature.equals(((OrderedSemanticPair)other).getB().signature)) {
             return false;
         } else {
             return true;
         }
-        
     }    
+    
+    @Override
+    public int hashCode() {
+        return a.hashCode()/2 + b.hashCode()/4;
+    }
+    
     
 }

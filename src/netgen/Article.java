@@ -84,7 +84,7 @@ public class Article implements Comparable<Article> {
     }
 
     //Processing methods
-    public void stem(TokenProcessor stemmer) {
+    public void stemUsing(TokenProcessor stemmer) {
         for (Token token : processedText) {
             if (token.type == Token.TokenType.Semantic) {
                 token.signature = stemmer.stem(token.signature);

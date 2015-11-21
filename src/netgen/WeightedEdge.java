@@ -1,77 +1,67 @@
 package netgen;
-//TODO: Is this being used?
-public class WeightedEdge implements Comparable {
-    
-    private SemanticPair pair;
+
+import netgen.SemanticToken;
+
+public class WeightedEdge {
+    private SemanticToken a;
+    private SemanticToken b;
     private double weight;
+
+    /**
+     * @return the a
+     */
+    public String getA() {
+        return a.signature;
+    }
     
+    /**
+     * @return the b
+     */
+    public String getB() {
+        return b.signature;
+    }
     
-    public WeightedEdge(SemanticPair pair, double weight) {
-        this.pair = pair;
+    public WeightedEdge(SemanticToken a, SemanticToken b, double weight) {
+        if(a.getSignature().compareTo(b.getSignature()) > 0) {
+            this.a = new SemanticToken(a.getSignature());
+            this.b = new SemanticToken(b.getSignature());
+        } else {
+            this.a = new SemanticToken(b.getSignature());
+            this.b = new SemanticToken(a.getSignature());
+        }
         this.weight = weight;
     }
     
-    public WeightedEdge(String a, String b) {
-        pair = new SemanticPair(a, b);
-        weight = 0;
-    }
-    
-    //Compares by edge weight
-    //Warning: Behavior is not consistent with equals()
-    @Override
-    public int compareTo(Object other) throws NullPointerException, ClassCastException {
-        if (other == null) {
-            throw new NullPointerException();
-        }
-        if (!other.getClass().equals(this.getClass())) {
-            throw new ClassCastException();
-        }
-        WeightedEdge otherEdge = (WeightedEdge) other;
-        
-        if (this.getWeight() > otherEdge.getWeight()) {
-            return 1;
-        } else if (this.getWeight() < otherEdge.getWeight()) {
-            return -1;
+    public WeightedEdge(String a, String b, double weight) {
+        if(a.compareTo(b) > 0) {
+            this.a = new SemanticToken(a);
+            this.b = new SemanticToken(b);
         } else {
-            return 0;
-        }
-
+            this.a = new SemanticToken(b);
+            this.b = new SemanticToken(a);
+        }    
+        this.weight = weight;
     }
     
-    //Warning: Edges are checked for equality and hashed by their incident vertices
-    //without respect for their weight
     @Override
     public boolean equals(Object other) {
-        if(other.getClass() != this.getClass()) {
+        
+        if(!other.getClass().equals(this.getClass())) {
             return false;
-        } else if (this.pair.equals(((WeightedEdge)other).pair)) {
-            return true;
+        } else if (!this.a.equals(((OrderedSemanticPair)other).getA())) {
+            return false;
+        } else if (!this.b.equals(((OrderedSemanticPair)other).getB())) {
+            return false;
         } else {
-            return false;
+            return true;
         }
-    }
-    
-    //Warning: Edges are checked for equality and hashed by their incident vertices
-    //without respect for their weight
+    }    
+
     @Override
     public int hashCode() {
-        return (pair.getA().hashCode()/2 + pair.getA().hashCode()%2 - pair.getB().hashCode()%2 + pair.getB().hashCode()/2);
+        return a.hashCode()/2 + b.hashCode()/2;
     }
-
-    /**
-     * @return the pair
-     */
-    public SemanticPair getIncidentTokens() {
-        return pair;
-    }
-
-    /**
-     * @param pair the pair to set
-     */
-    public void setPair(SemanticPair pair) {
-        this.pair = pair;
-    }
-
+    
     /**
      * @return the weight
      */
@@ -85,7 +75,7 @@ public class WeightedEdge implements Comparable {
     public void setWeight(double weight) {
         this.weight = weight;
     }
-
+    
     
     
 }

@@ -8,6 +8,7 @@ package netgen;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import netgen.Token.TokenType;
 import netgen.stemmers.Porter2;
 import netgen.stemmers.TokenProcessor;
 
@@ -47,7 +48,7 @@ public class Scripts {
             article.removeAll(stopwords);
 
             //Stems all semantic tokens
-            article.stem(stemmer);
+            article.stemUsing(stemmer);
 
 //            System.out.println("Unique tokens: " + corpus.getTokenSet().size());
 //            System.out.println("Tokenized Sentences: " + corpus.getProcessedText().size());
@@ -55,7 +56,7 @@ public class Scripts {
                     Network.generateAssociativeSemanticNetworkByMultiSentenceSlidingWindow(article.processedText, 3, 75),
                     article.calendar);
 
-            network.limitEdges(2000);
+//            network.limitEdges(2000);
 //            network.normalizeToHighestEdge();
 //            network.filterEdgesBelow(0.15);
             network.writeEdgelistWithAdditionalMetadata("" + i);
@@ -70,9 +71,8 @@ public class Scripts {
         System.out.println("Finished. Created " + i + " networks");
     }
 
-    
     //Hopefully pretty much does what it says
-    public static void generateAndExportMarkovChain(String name) {
+    public static void generateAndExportWeightedEdgelist(String name) {
 
         //Initialize Stemmer
         TokenProcessor stemmer = new Porter2();
@@ -86,8 +86,14 @@ public class Scripts {
 
         System.out.println("Split into " + corpus.size() + " articles");
 
-        ArrayList<Token> list = new ArrayList<>();
+        //Import stopwords
+        HashSet<Token> stopwords = new HashSet<>();
+        String stops = IO.readFileAsString("stopwords_combined.txt");
+        stops = Filter.nonpermittedCharacters(stops);
+        stopwords.addAll(Tokenizer.tokenizeLine(stops));
 
+        //Process articles into a list of tokens
+        ArrayList<Token> list = new ArrayList<>();
         for (Article article : corpus) {
 
             //Split on sentences, filter nonpermitted characters, and tokenize
@@ -95,42 +101,69 @@ public class Scripts {
                     Filter.nonpermittedCharacters(
                             SentenceSplitter.splitSentences(article.text)));
 
+            //Remove stopwords
+            article.processedText.removeAll(stopwords);
+
             //Stems all semantic tokens
-            article.stem(stemmer);
+            article.stemUsing(stemmer);
 
             //Put all tokens in a single long list
             list.addAll(article.processedText);
         }
 
-        
-        WeightedDirectedNetwork markovChain = new WeightedDirectedNetwork();
+        int sizeWithoutAnnotators = 0;
 
-        markovChain.edgeCount = WeightedDirectedNetwork.generateEdgeCount(list);
-        
-        markovChain.writeEdgelist(name);
-    }
-
-    
-    
-    //Simple version based on markov chain
-    public static void generateAndExportSynonymityNetwork (String markovChainFileName, String outputFileName) {
-        
-        WeightedDirectedNetwork markovChain = new WeightedDirectedNetwork();
-        
-        //TODO: Collapse this into constructor?
-        HashMap<OrderedSemanticPair, Double> edges = IO.importWeightedDirectedEdgelist(IO.readFileAsLines(markovChainFileName));
-        
-        for(OrderedSemanticPair pair : edges.keySet()) {
-            markovChain.edgeCount.put(pair, edges.get(pair).intValue());
+        for (Token token : list) {
+            if (token.type == TokenType.Semantic) {
+                sizeWithoutAnnotators++;
+            }
         }
-        
-        markovChain.populateAdditionalAttributes(10, 1);
-        
-        Network synonimityNetwork = markovChain.extractSynonimityNetwork();
-        
-        synonimityNetwork.writeEdgelist(outputFileName);
+
+        System.out.println("List size: " + sizeWithoutAnnotators + "/" + list.size() + " tokens");
+
+        HashSet<Token> tokenSet = new HashSet<>();
+        tokenSet.addAll(list);
+
+        System.out.println("Unique tokens in list: " + tokenSet.size() + " tokens");
+
+        WeightedDirectedNetwork weightedEdgelist = new WeightedDirectedNetwork(list);
+
+        weightedEdgelist.writeEdgelist(name);
     }
 
-   
+    //Simple version based on markov chain
+    public static void generateAndExportMarkovChainAndSynonymityNetwork(String edgeListFileName, String markovFileName, String outputFileName) {
+
+        //Import edge set
+        HashMap<OrderedSemanticPair, Double> edges = IO.importWeightedDirectedEdgelist(IO.readFileAsLines(edgeListFileName));
+        WeightedDirectedNetwork edgeset = new WeightedDirectedNetwork(edges);
+
+        //Filter edge set
+        edgeset.removeTokensBelow(2);
+        edgeset.removeEdgesBelow(2);
+        
+
+        //Create and write markov chain
+        System.out.println("Starting Markov Chain Generation");
+        MarkovChain markovChain = edgeset.toMarkovChain();
+        WeightedDirectedNetwork markovOut = markovChain.outEdgesToWeightedDirectedNetwork();
+        markovOut.writeEdgelist("markov");
+
+        //DEBUG
+//        for(OrderedSemanticPair edge : markovOut.edges.keySet()) {
+//            if(markovOut.edges.get(edge) > 1.01) {
+//                System.out.println("WARNING: " + edge.getA().signature + "  " + edge.getB().signature + "  " + edges.get(edge));
+//            } 
+//        }
+        //Create and write synonymity network
+        /*
+        System.out.println("Starting Synonymity Network Generation");
+        Network synNet = markovChain.toSynonymityNetwork();
+        synNet.filterEdgesBelow(1);
+        synNet.writeEdgelist(outputFileName);
+        */
+                
+        System.out.println("Script Complete");
+    }
 
 }

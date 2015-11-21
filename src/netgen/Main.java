@@ -8,7 +8,8 @@ import java.util.HashSet;
 public class Main {
 
     public static void main(String[] args) {
-        Scripts.generateAndExportIndividualNetworksForEachArticle("tribune");
+//        Scripts.generateAndExportWeightedEdgelist("edgelist");
+        Scripts.generateAndExportMarkovChainAndSynonymityNetwork("edgelist.dl", "markov", "syn-net");
     }
     
 }

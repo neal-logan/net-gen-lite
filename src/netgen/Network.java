@@ -1,6 +1,6 @@
 package netgen;
 
-import netgen.WeightedEdge;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -13,17 +13,17 @@ import java.util.Random;
 
 public class Network {
 
-    public HashMap<SemanticPair, Double> edgeSet;
+    public HashMap<SemanticPair, Double> edges;
     public Calendar calendar;
 
     //CONSTRUCTORS
     public Network() {
-        edgeSet = new HashMap<SemanticPair, Double>();
+        edges = new HashMap<SemanticPair, Double>();
         calendar = new GregorianCalendar();
     }
 
     public Network(HashMap<SemanticPair, Double> edgeSet, Calendar date) {
-        this.edgeSet = edgeSet;
+        this.edges = edgeSet;
         this.calendar = date;
     }
 
@@ -110,23 +110,23 @@ public class Network {
      * @return the edgeSet
      */
     public HashMap<SemanticPair, Double> getEdgeset() {
-        return edgeSet;
+        return edges;
     }
 
     public double meanEdge() {
 
         double mean = 0;
 
-        for (Entry<SemanticPair, Double> entry : this.edgeSet.entrySet()) {
+        for (Entry<SemanticPair, Double> entry : this.edges.entrySet()) {
             mean += (double) entry.getValue();
         }
-        mean /= this.edgeSet.size();
+        mean /= this.edges.size();
         return mean;
     }
 
     public double heaviestEdge() {
         double highest = 0;
-        for (Entry<SemanticPair, Double> entry : this.edgeSet.entrySet()) {
+        for (Entry<SemanticPair, Double> entry : this.edges.entrySet()) {
             if ((double) entry.getValue() > highest) {
                 highest = (double) entry.getValue();
             }
@@ -137,7 +137,7 @@ public class Network {
     public void addNoise(double intensity) {
         Random random = new Random();
 
-        for (Entry<SemanticPair, Double> entry : this.edgeSet.entrySet()) {
+        for (Entry<SemanticPair, Double> entry : this.edges.entrySet()) {
             entry.setValue((double) entry.getValue() + random.nextDouble() * intensity);
         }
     }
@@ -147,7 +147,7 @@ public class Network {
     public void normalizeToHighestEdge() {
 
         double scale = 1.0 / this.heaviestEdge();
-        scale(this.edgeSet, scale);
+        scale(this.edges, scale);
 
     }
 
@@ -157,36 +157,21 @@ public class Network {
 //    }
 
     public void filterEdgesBelow(double minWeight) {
-        ArrayList<WeightedEdge> edgeList = this.getEdgesAsList();
-
-        edgeList.sort(null);
 
         HashMap<SemanticPair, Double> filteredEdges = new HashMap<>();
-
-        for (WeightedEdge edge : edgeList) {
-            if (edge.getWeight() >= minWeight) {
-                filteredEdges.put(edge.getIncidentTokens(), edge.getWeight());
+        
+        for(SemanticPair edge : this.edges.keySet()) {
+            if(edges.get(edge) >= minWeight) {
+                filteredEdges.put(new SemanticPair(edge.getA(), edge.getB()), edges.get(edge));
             }
         }
-
-        this.edgeSet = filteredEdges;
+        edges = filteredEdges;
     }
 
-    public void limitEdges(int maxEdges) {
-
-        ArrayList<WeightedEdge> edgeList = this.getEdgesAsList();
-
-        edgeList.sort(null);
-
-        HashMap<SemanticPair, Double> filteredEdges = new HashMap<>();
-
-        for (int i = 0; i < maxEdges && i < edgeList.size(); i++) {
-            WeightedEdge edge = edgeList.get(i);
-            filteredEdges.put(edge.getIncidentTokens(), edge.getWeight());
-        }
-
-        this.edgeSet = filteredEdges;
-    }
+//    public void limitEdges(int maxEdges) {
+//        
+//
+//    }
 
     /*
      //ACCESSORS AND MUTATORS
@@ -195,13 +180,7 @@ public class Network {
     
      * @return a list of Edge objects consisting of all edges in this network
      */
-    public ArrayList<WeightedEdge> getEdgesAsList() {
-        ArrayList<WeightedEdge> edgelist = new ArrayList<>();
-        for (Entry entry : this.edgeSet.entrySet()) {
-            edgelist.add(new WeightedEdge((SemanticPair) entry.getKey(), (double) entry.getValue()));
-        }
-        return edgelist;
-    }
+
 
     //Multi-sentence-complete sliding window
     public static HashMap<SemanticPair, Double> generateAssociativeSemanticNetworkByMultiSentenceSlidingWindow(ArrayList<Token> input,
@@ -285,6 +264,7 @@ public class Network {
 //            }
 //        }
 //    }
+    
     //Forms a complete graph of a single window
     private static HashMap<SemanticPair, Double> generateAssociativeNetworkOfSingleSentence(ArrayList<Token> line) {
         HashMap<SemanticPair, Double> edgeSet = new HashMap<>();
