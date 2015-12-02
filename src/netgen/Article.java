@@ -15,13 +15,13 @@ import java.util.HashMap;
  */
 public class Article implements Comparable<Article> {
 
-    public String title;
-    public String link;
-    public String summary;
-    public String text;
-    public String source;
-    public ArrayList<Token> processedText;
-    public Calendar calendar;
+    public String title = "";
+    public String link = "";
+    public String summary = "";
+    public String text = "";
+    public String source = "";
+    public ArrayList<Token> processedText = new ArrayList<>();
+    public Calendar calendar = new GregorianCalendar();
 
     public Article(String text, String source, String date, String title, String summary, String link) {
         this.text = text;
@@ -29,9 +29,11 @@ public class Article implements Comparable<Article> {
         this.title = title;
         this.summary = summary;
         this.link = link;
-        calendar = new GregorianCalendar();
         this.setDate(date);
     }
+    
+    public Article() {}
+    
 
     //METADATA GENERATION METHODS
     public HashMap<Token, Integer> getTokenFrequencyMap() {

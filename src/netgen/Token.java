@@ -3,7 +3,6 @@ package netgen;
 
 
 //Wrapper class for the String signatures of annotations and semantic tokens
-
 public abstract class Token
 
 {

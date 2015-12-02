@@ -14,7 +14,7 @@ import netgen.stemmers.TokenProcessor;
 
 /**
  *
- * @author Neal
+ * @author Neal Logan
  */
 public class Scripts {
 
@@ -71,8 +71,9 @@ public class Scripts {
         System.out.println("Finished. Created " + i + " networks");
     }
 
-    //Hopefully pretty much does what it says
-    public static void generateAndExportWeightedEdgelist(String name) {
+    //Takes the KTUU, Tribune and ADN .csv files, creates a single adjacency network and exports it as a .dl
+    //Stemming and stopword removal may be omitted
+    public static void generateAndExportWeightedEdgelistFromArticles(String name) {
 
         //Initialize Stemmer
         TokenProcessor stemmer = new Porter2();
@@ -102,14 +103,25 @@ public class Scripts {
                             SentenceSplitter.splitSentences(article.text)));
 
             //Remove stopwords
-            article.processedText.removeAll(stopwords);
+//            article.processedText.removeAll(stopwords);
 
             //Stems all semantic tokens
-            article.stemUsing(stemmer);
+//            article.stemUsing(stemmer);
 
             //Put all tokens in a single long list
             list.addAll(article.processedText);
         }
+        
+        //Filter tokens with only one letter
+        ArrayList<Token> filteredList = new ArrayList<>();
+        for(Token token : list) {
+            if (token.signature.length() > 1) {
+                filteredList.add(token);
+            }
+        }
+        list = filteredList;
+        System.out.println("Tokens with less than two characters removed");
+        
 
         int sizeWithoutAnnotators = 0;
 
@@ -131,16 +143,88 @@ public class Scripts {
         weightedEdgelist.writeEdgelist(name);
     }
 
+    
+    //Tokenizes the text in the input file, creates an adjacency network and exports that as a .dl
+    //Messy due to adaptation
+    //No stemming or stopword removal, currently
+    public static void generateAndExportWeightedEdgelistFromText(
+            String inputFile, String outputFile, 
+            boolean stem, boolean removeStopwords) {
+
+        //Initialize Stemmer
+        TokenProcessor stemmer = new Porter2();
+
+        //Process the text into a list of tokens
+        System.out.println("Importing text");
+
+        String text = IO.readFileAsString(inputFile);
+        ArrayList<Token> list = Tokenizer.tokenize(
+                    Filter.nonpermittedCharacters(
+                            SentenceSplitter.splitSentences(text)));
+
+        //Import stopwords
+        HashSet<Token> stopwords = new HashSet<>();
+        String stops = IO.readFileAsString("stopwords_combined.txt");
+        stops = Filter.nonpermittedCharacters(stops);
+        stopwords.addAll(Tokenizer.tokenizeLine(stops));
+        
+        if(removeStopwords) {
+            list.removeAll(stopwords);
+        }
+        
+        //Filter tokens with only one letter
+//        ArrayList<Token> filteredList = new ArrayList<>();
+//        for(Token token : list) {
+//            if (token.signature.length() > 1) {
+//                filteredList.add(token);
+//            }
+//        }
+//        list = filteredList;
+//        System.out.println("Tokens with less than two characters removed");
+
+        if(stem) {
+            Article article = new Article();
+            article.processedText = list;
+            article.stemUsing(stemmer);
+            list = article.processedText;
+        }
+        
+        
+        
+        
+        int sizeWithoutAnnotators = 0;
+
+        for (Token token : list) {
+            if (token.type == TokenType.Semantic) {
+                sizeWithoutAnnotators++;
+            }
+        }
+
+        System.out.println("List size: " + sizeWithoutAnnotators + "/" + list.size() + " tokens");
+
+        HashSet<Token> tokenSet = new HashSet<>();
+        tokenSet.addAll(list);
+
+        System.out.println("Unique tokens in list: " + tokenSet.size() + " tokens");
+
+        WeightedDirectedNetwork weightedEdgelist = new WeightedDirectedNetwork(list);
+
+        weightedEdgelist.writeEdgelist(outputFile);
+    }
+    
+    
     //Simple version based on markov chain
-    public static void generateAndExportMarkovChainAndSynonymityNetwork(String edgeListFileName, String markovFileName, String outputFileName) {
+    public static void generateAndExportMarkovChainAndSynonymityNetwork(
+            String edgeListFileName, String markovFileName, 
+            String outputFileName, int tokenThreshold, int edgeThreshold) {
 
         //Import edge set
         HashMap<OrderedSemanticPair, Double> edges = IO.importWeightedDirectedEdgelist(IO.readFileAsLines(edgeListFileName));
         WeightedDirectedNetwork edgeset = new WeightedDirectedNetwork(edges);
 
         //Filter edge set
-        edgeset.removeTokensBelow(2);
-        edgeset.removeEdgesBelow(2);
+        edgeset.removeTokensBelow(tokenThreshold);
+        edgeset.removeEdgesBelow(edgeThreshold);
         
 
         //Create and write markov chain
@@ -156,12 +240,12 @@ public class Scripts {
 //            } 
 //        }
         //Create and write synonymity network
-        /*
+        
         System.out.println("Starting Synonymity Network Generation");
         Network synNet = markovChain.toSynonymityNetwork();
-        synNet.filterEdgesBelow(1);
+        synNet.filterEdgesBelow(0.15);
         synNet.writeEdgelist(outputFileName);
-        */
+        
                 
         System.out.println("Script Complete");
     }

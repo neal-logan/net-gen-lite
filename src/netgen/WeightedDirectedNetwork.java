@@ -5,14 +5,13 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import netgen.Token.TokenType;
 
 /**
  *
- * Pretty much just for Markov chains * //TODO: Rename "MarkovChain" and extract
- * superclass? for the moment. //TODO: Rename "MarkovChain" and extract
- * superclass?
+ * Pretty much just for Markov chains 
+ * TODO: Rename "MarkovChain" and extract superclass?
+ * 
  */
 public class WeightedDirectedNetwork {
 
