@@ -48,7 +48,7 @@ public class Scripts {
             article.removeAll(stopwords);
 
             //Stems all semantic tokens
-            article.stemUsing(stemmer);
+            article.stem(stemmer);
 
 //            System.out.println("Unique tokens: " + corpus.getTokenSet().size());
 //            System.out.println("Tokenized Sentences: " + corpus.getProcessedText().size());
@@ -185,7 +185,7 @@ public class Scripts {
         if(stem) {
             Article article = new Article();
             article.processedText = list;
-            article.stemUsing(stemmer);
+            article.stem(stemmer);
             list = article.processedText;
         }
         

@@ -212,7 +212,7 @@ public class Lancaster implements TokenProcessor {
     /**
      * Create a Paice/Husk stemmer using the default stemming rules.
      *
-     * @throws	StemmerException if something goes wrong.
+     * 
      *
      * <p>
      * Prefixes are automatically removed from words with more than two

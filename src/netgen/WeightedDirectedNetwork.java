@@ -9,17 +9,17 @@ import netgen.Token.TokenType;
 
 /**
  *
- * Pretty much just for Markov chains 
- * TODO: Rename "MarkovChain" and extract superclass?
- * 
+ * Pretty much just for Markov chains TODO: Rename "MarkovChain" and extract
+ * superclass?
+ *
  */
 public class WeightedDirectedNetwork {
 
-    //Attributes for the edge set
-    public HashMap<OrderedSemanticPair, Double> edges = new HashMap<>(); //Map : (Token a, Token b) --> Int number of instances of each edge
+    //VARIABLES
+    //Map : (Token a, Token b) --> Int number of instances of each edge
+    public HashMap<OrderedSemanticPair, Double> edges = new HashMap<>();
 
     //CONSTRUCTORS
-    
     //Takes an edgeset representing a markov chain as argument, stores and processes it
     public WeightedDirectedNetwork(HashMap<OrderedSemanticPair, Double> input) {
         for (OrderedSemanticPair pair : input.keySet()) {
@@ -28,9 +28,8 @@ public class WeightedDirectedNetwork {
                     input.get(pair));
         }
     }
-    
-    //METHODS
-    
+
+    //ACCESSORS/MUTATORS
     public HashMap<Token, HashSet<Token>> getAllOutEdges() {
         HashSet<Token> tokenSet = this.getTokenSet();
 
@@ -41,17 +40,13 @@ public class WeightedDirectedNetwork {
             outEdges.put(token, new HashSet<>());
         }
 
-        //Add in/out edges to edgesets
-        //For each edge
+        //For each edge, add out edge
         for (OrderedSemanticPair edge : edges.keySet()) {
-
-            //Add outEdge
             outEdges.get(edge.getA()).add(new SemanticToken(edge.getB().signature));
-
         }
         return outEdges;
     }
-    
+
     public HashMap<Token, HashSet<Token>> getAllInEdges() {
         HashSet<Token> tokenSet = this.getTokenSet();
 
@@ -61,8 +56,7 @@ public class WeightedDirectedNetwork {
         for (Token token : tokenSet) {
             inEdges.put(token, new HashSet<>());
         }
-
-        //Add in/out edges to edgesets
+        
         //For each edge
         for (OrderedSemanticPair edge : edges.keySet()) {
             //Add inEdge
@@ -84,9 +78,9 @@ public class WeightedDirectedNetwork {
 
     //Returns a map containing the degree each token
     public HashMap<Token, Double> getTokenCountMap() {
-       //Populate tokenCount
+        //Populate tokenCount
         HashMap<Token, Double> tokenCount = new HashMap<>();
-        
+
         for (OrderedSemanticPair pair : edges.keySet()) {
             if (tokenCount.containsKey(pair.getA())) {
                 tokenCount.put(pair.getA(), tokenCount.get(pair.getA()) + 1);
@@ -100,7 +94,7 @@ public class WeightedDirectedNetwork {
                 tokenCount.put(pair.getB(), 1.0);
             }
         }
-        
+
         return tokenCount;
     }
 
@@ -150,59 +144,58 @@ public class WeightedDirectedNetwork {
 
     public void removeTokensBelow(int threshold) {
         HashMap<Token, Double> tokenCount = getTokenCountMap();
-        
+
         HashSet<Token> tokensToRemove = new HashSet<>();
-        
-        for(Token token : tokenCount.keySet()) {
-            if(tokenCount.get(token) < threshold) {
+
+        for (Token token : tokenCount.keySet()) {
+            if (tokenCount.get(token) < threshold) {
                 tokensToRemove.add(token);
             }
         }
-        
+
         HashMap<OrderedSemanticPair, Double> filteredEdges = new HashMap<>();
-        
+
         int startingEdges = edges.size();
-        
-        for(OrderedSemanticPair edge : edges.keySet()) {
-            if(!tokensToRemove.contains(edge.getA())
+
+        for (OrderedSemanticPair edge : edges.keySet()) {
+            if (!tokensToRemove.contains(edge.getA())
                     && !tokensToRemove.contains(edge.getB())) {
                 filteredEdges.put(edge, edges.get(edge));
             }
         }
-        
+
         edges = filteredEdges;
         System.out.println("Removed " + (startingEdges - edges.size()) + " edges below token count threshold");
     }
-    
+
     public MarkovChain toMarkovChain() {
-        
+
         HashSet<Token> tokenSet = this.getTokenSet();
-        
+
         MarkovChain markovChain = new MarkovChain();
-        
+
         int i = 0;
         for (Token token : tokenSet) {
             SemanticNode node = new SemanticNode(token.signature, edges);
-            
+
             markovChain.nodes.put(token.signature, node);
-            
+
             //DEBUG
-            if(node.getTotalInProbability() > 1.01 || node.getTotalOutProbability() > 1.01) {
+            if (node.getTotalInProbability() > 1.01 || node.getTotalOutProbability() > 1.01) {
                 System.out.println("Warning: total probability high");
                 System.out.println(node.toString());
             }
-            
-            
-            if(i%100 == 0) {
+
+            if (i % 100 == 0) {
                 System.out.println("Created " + i + " of " + tokenSet.size() + " nodes");
 //                System.out.println(node.toString());
-            }            
+            }
             i++;
-            
+
         }
 
         System.out.println("Markov Chain Instantiated with " + markovChain.nodes.size() + " nodes.");
-        
+
         return markovChain;
     }
 
@@ -222,7 +215,7 @@ public class WeightedDirectedNetwork {
                 writer.write("\n" + edge.getA().getSignature() + " " + edge.getB().getSignature() + " " + edges.get(edge) + "\t");
 //                } 
             }
-            
+
             System.out.println("Unique edges written: " + edgesWritten);
             writer.close();
 

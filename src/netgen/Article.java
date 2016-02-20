@@ -15,6 +15,7 @@ import java.util.HashMap;
  */
 public class Article implements Comparable<Article> {
 
+    //TODO: Switch this around to a hashmap<string,string> of attributes
     public String title = "";
     public String link = "";
     public String summary = "";
@@ -86,7 +87,7 @@ public class Article implements Comparable<Article> {
     }
 
     //Processing methods
-    public void stemUsing(TokenProcessor stemmer) {
+    public void stem(TokenProcessor stemmer) {
         for (Token token : processedText) {
             if (token.type == Token.TokenType.Semantic) {
                 token.signature = stemmer.stem(token.signature);
